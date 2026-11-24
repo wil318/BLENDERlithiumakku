@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <!-- Import-Map muss vor jedem modulepreload/Modul stehen, sonst ignoriert Firefox sie -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+      }
+    }
+  </script>
+  <title>Der Lithium-Ionen-Akku · 3D-Modell</title>
+  <meta name="description" content="Interaktives 3D-Modell des Lithium-Ionen-Akkus: Entladen und Laden, Schaukelstuhl-Prinzip, Elektronen und Lithium-Ionen – in Blender modelliert, im Browser erkundbar." />
+  <meta name="theme-color" content="#060c18" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Akku 3D" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <meta property="og:title" content="Der Lithium-Ionen-Akku – interaktives 3D-Modell" />
+  <meta property="og:image" content="img/render.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="src/style.css" />
+  <link rel="modulepreload" href="src/content.js" />
+  <link rel="preload" href="models/akku.glb" as="fetch" crossorigin />
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene" aria-label="3D-Ansicht: Lithium-Ionen-Akku"></canvas>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <div id="hotspots" aria-live="off"></div>
+    <div id="hoverTip" role="tooltip"></div>
+
+    <header class="brand">
+      <a class="logo" href="./" aria-label="Neu laden"><img src="lmg-tech-logo.png" alt="LMG TECH" width="72" height="72" /></a>
+      <div class="titles">
+        <div class="eyebrow">Elektrochemie · Klasse 9</div>
+        <h1>Der Lithium-Ionen-<em>Akku</em></h1>
+        <p>Entladen und Laden in 3D</p>
+      </div>
+    </header>
+
+    <nav class="index" id="index" aria-label="Bauteile">
+      <button class="index-toggle" id="indexToggle" aria-expanded="true">
+        <span>Bauteile</span><span class="count" id="partCount"></span><svg viewBox="0 0 12 12" width="12" height="12"><path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
+      <ol id="partList"></ol>
+    </nav>
+
+    <!-- Akku-Steuerung: Ladestand, Entladen/Laden -->
+    <section class="proc" id="proc" aria-label="Akku steuern">
+      <div class="proc-top"><span>Ladestand</span><b id="procPct">100 %</b></div>
+      <div class="battery" aria-hidden="true"><i id="procBar"></i><span class="cap"></span></div>
+      <div class="proc-btns">
+        <button class="pbtn" id="btnDischarge" title="Lämpchen anschließen und entladen">Entladen ▸</button>
+        <button class="pbtn" id="btnCharge" title="Ladegerät anschließen und laden">◂ Laden</button>
+        <button class="pbtn ghost" id="btnHold" aria-label="Anhalten" title="Anhalten">❚❚</button>
+      </div>
+      <div class="proc-state" id="procState">Akku voll · Ruhe</div>
+    </section>
+
+    <aside id="info" class="info" aria-hidden="true">
+      <button class="close" id="infoClose" aria-label="Schließen">×</button>
+      <div class="info-kicker"><span class="swatch"></span><span id="infoKicker"></span></div>
+      <h2 id="infoTitle"></h2>
+      <p id="infoText"></p>
+      <dl id="infoFacts"></dl>
+      <div class="info-actions">
+        <button class="btn" id="infoFocus">Heranzoomen</button>
+        <button class="btn ghost" id="infoPrev" aria-label="Vorheriges Bauteil">←</button>
+        <button class="btn ghost" id="infoNext" aria-label="Nächstes Bauteil">→</button>
+      </div>
+    </aside>
+
+    <div class="readout" aria-label="Messwerte">
+      <div><span class="k">Station</span><span class="v" id="rStep">1 / 9</span></div>
+      <div><span class="k">Li⁺ im Graphit</span><span class="v" id="rG">6</span></div>
+      <div><span class="k">Li⁺ im Oxid</span><span class="v" id="rO">0</span></div>
+      <div><span class="k">Co⁴⁺ / Co³⁺</span><span class="v" id="rCo">6 / 0</span></div>
+    </div>
+
+    <div class="zoom" aria-label="Zoom">
+      <button id="zoomIn" aria-label="Hineinzoomen">+</button>
+      <input id="zoomSlider" type="range" min="0" max="1000" value="500" orient="vertical" aria-label="Zoomstufe" />
+      <button id="zoomOut" aria-label="Herauszoomen">−</button>
+    </div>
+
+    <section class="phase" id="phase" aria-live="polite">
+      <div class="phase-top">
+        <span class="phase-no" id="phaseNo">01</span><span class="phase-step" id="phaseStep">Aufbau</span>
+        <span class="phase-nav"><button id="phasePrev" aria-label="Vorherige Station">‹</button><button id="phaseNext" aria-label="Nächste Station">›</button></span>
+      </div>
+      <h3 id="phaseTitle">Der Lithium-Ionen-Akku</h3>
+      <p id="phaseText"></p>
+      <div class="reveal" id="reveal"></div>
+      <div class="phase-track" id="phaseTrack"></div>
+    </section>
+
+    <footer class="controls">
+      <button class="play paused" id="play" aria-label="Rundgang abspielen">
+        <svg class="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        <svg class="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>
+      </button>
+      <div class="timeline">
+        <input id="scrub" type="range" min="0" max="8999" value="0" step="1" aria-label="Rundgang" />
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <div class="chips">
+        <button class="chip" id="crystal" aria-pressed="false" title="Kristallstruktur statt Schema (K)">Kristall</button>
+        <button class="chip sol" id="arrows" aria-pressed="false" title="Pfeile für e⁻ und Li⁺ und Pole des Ladegeräts (P)">Pfeile</button>
+        <button class="chip sol" id="eqs" aria-pressed="false" title="Teilgleichungen an den Polen (G)">Gleichungen</button>
+        <button class="chip on" id="labels" aria-pressed="true" title="Beschriftungen ein/aus">Labels</button>
+        <button class="chip" id="reset" title="Ansicht zurücksetzen">Ansicht</button>
+      </div>
+    </footer>
+
+    <div id="loader">
+      <div class="loader-inner">
+        <img src="lmg-tech-logo.png" alt="LMG TECH" width="64" height="64" />
+        <div class="loader-title">Lade Akku</div>
+        <div class="loader-bar"><i id="loadBar"></i></div>
+        <div class="loader-pct" id="loadPct">0 %</div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
