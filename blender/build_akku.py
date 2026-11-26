@@ -738,7 +738,7 @@ LABELS = [  # (t0, t1, Text, Anker-Art, Index/Anker)
     (4.1, 7.2, "Minuspol: Graphit-Halbzelle", "anchor", "graphit"), (4.1, 7.2, "Pluspol: Cobalt-Oxid-Halbzelle", "anchor", "oxid"),
     (4.5, 7.2, "Elektrolyt", "anchor", "elektrolyt"), (4.5, 7.2, "Separator", "anchor", "separator"),
     (4.9, 7.2, "Lämpchen", "anchor", "lampe"), (4.9, 7.2, "Lithium-Ion", "li", 6),
-    (9.5, 14.0, "Li⁺", "li", 0), (9.5, 14.0, "zusätzliches e⁻", "e", 0),
+    (9.5, 14.0, "Li⁺", "li", 0), (9.5, 14.0, "C₆⁻-Einheit mit zusätzlichem e⁻", "c6", 0),
     (28.5, 34.5, "Co", "co", -1),
     (43.5, 50.0, "Ladegerät", "anchor", "ladegeraet"),
 ]
@@ -938,6 +938,8 @@ if True:  # Video-Animation immer anlegen
                 pos[L["text"]] = screen(st["li"][L["ref"]] + np.array([0, 0, R_LI]))
             elif L["kind"] == "e":
                 pos[L["text"]] = screen(st["e"][L["ref"]] + np.array([0, 0, R_E]))
+            elif L["kind"] == "c6":
+                pos[L["text"]] = screen(np.array(C6_POS[L["ref"]]) + np.array([HEX_B, -HEX_B * 0.5, 0.17]))
             elif L["kind"] == "co":
                 for i in range(6):
                     pos[f"co{i}"] = screen(np.array(CO_POS[i]) + np.array([0, -R_CO, -0.05])) + [round(st["co"][i], 3)]

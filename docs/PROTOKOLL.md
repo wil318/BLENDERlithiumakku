@@ -107,3 +107,7 @@ Im echten Graphit gehört das zusätzliche Elektron keinem bestimmten Sechsring,
 - Jetzt berechnet das Skript für jedes Elektron den Punkt, an dem es das Cobalt-Ion erreicht (`u_arrive` in `meta.json`). Erst dann wird Co⁴⁺ zu Co³⁺, und das Elektron verschwindet im Ion.
 - Ebenso wird der C₆-Ring grau, während das Elektron ihn verlässt (`u_depart`). Beim Laden läuft alles umgekehrt.
 - Viewer und Blender-Szene nutzen dieselben Werte. Das Video ist noch nicht neu gerendert.
+
+### Video neu gerendert (26.11.2026)
+- `video/akku.mp4` zeigt jetzt die C₆-Ringe (C₆⁻ rötlich → C₆ grau) und den Farbwechsel der Cobalt-Ionen erst bei Ankunft des Elektrons.
+- In der Graphit-Nahaufnahme steht die neue Beschriftung „C₆⁻-Einheit mit zusätzlichem e⁻“.
