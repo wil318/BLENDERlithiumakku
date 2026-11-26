@@ -370,12 +370,14 @@ function updateParticles(time, dt) {
     samplePath(parts.liPaths[i], u, parts.li[i].position);
     const e = parts.e[i];
     samplePath(parts.ePaths[i], u, e.position);
-    e.visible = u < 0.985;
-    const c = smooth01((u - 0.9) / 0.1);
+    // Farbwechsel erst, wenn das Elektron das Cobalt-Ion erreicht (bzw. den C₆-Ring verlässt)
+    const ua = meta.u_arrive[i], ud = meta.u_depart[i];
+    e.visible = u < ua + 0.4 * (1 - ua);
+    const c = smooth01((u - ua) / Math.max(1e-3, 0.8 * (1 - ua)));
     if (c < 0.5) co4++;
     parts.co[i].material.color.copy(parts.co4).lerp(parts.co3, c);
     parts.co[i].material.emissive.copy(parts.co[i].material.color).multiplyScalar(0.18 * (1 - c));
-    const g = smooth01(u / 0.06);                 // 0 = C₆⁻ (Elektron im Ring), 1 = C₆
+    const g = smooth01(u / Math.max(1e-3, ud));   // 0 = C₆⁻ (Elektron im Ring), 1 = C₆
     if (g < 0.5) c6m++;
     parts.c6[i].color.copy(parts.c6m).lerp(parts.c6n, g);
     parts.c6[i].emissive.copy(parts.c6[i].color).multiplyScalar(0.3 * (1 - g));
@@ -469,7 +471,7 @@ function buildUI() {
     const t = mkTag('co4', 'Co⁴⁺', (v) => v.copy(c.position).add(new THREE.Vector3(0, 0.28, 0.25)));
     t.show = () => state.labels && (state.tasks || TOUR[state.tourIdx].coLabels || state.selected?.id === 'cobalt');
     t.update = () => {
-      const four = procInfo.u[i] < 0.95;
+      const four = procInfo.u[i] < meta.u_arrive[i] + 0.4 * (1 - meta.u_arrive[i]);
       t.el.classList.toggle('co4', four);
       t.el.classList.toggle('co3', !four);
       t.span.textContent = four ? 'Co⁴⁺' : 'Co³⁺';
@@ -479,7 +481,7 @@ function buildUI() {
     const t = mkTag('c6m', 'C₆⁻', (v) => v.copy(c).add(new THREE.Vector3(0.75, 0.05, 0.35)));
     t.show = () => state.labels && (state.tasks || TOUR[state.tourIdx].c6Labels || state.selected?.id === 'c6');
     t.update = () => {
-      const minus = procInfo.u[i] < 0.03;
+      const minus = procInfo.u[i] < meta.u_depart[i] * 0.5;
       t.el.classList.toggle('c6m', minus);
       t.el.classList.toggle('c6', !minus);
       t.span.textContent = minus ? 'C₆⁻' : 'C₆';

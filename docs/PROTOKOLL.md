@@ -101,3 +101,9 @@ Am Pluspol sieht man ein bestimmtes Teilchen seine Ladung ändern (Co⁴⁺ viol
 
 ### Hinweis für die Lehrkraft (bewusste Vereinfachung)
 Im echten Graphit gehört das zusätzliche Elektron keinem bestimmten Sechsring, es ist über die Schicht verteilt (delokalisiert). Die C₆-Einheit ist eine **Rechen-Einheit** („Für Gleichungen betrachten wir immer 6 Kohlenstoffatome“, Infotext Abschnitt 11). Das Modell zeigt sie wie die markierten Cobalt-Ionen als einzelnes Teilchen.
+
+### Nachtrag: Zeitpunkt des Farbwechsels
+- Bisher wechselten die Cobalt-Ionen die Farbe schon bei 90 % des Elektronenwegs. Das Elektron war da noch 2,5–3 Einheiten entfernt, im Ableiter.
+- Jetzt berechnet das Skript für jedes Elektron den Punkt, an dem es das Cobalt-Ion erreicht (`u_arrive` in `meta.json`). Erst dann wird Co⁴⁺ zu Co³⁺, und das Elektron verschwindet im Ion.
+- Ebenso wird der C₆-Ring grau, während das Elektron ihn verlässt (`u_depart`). Beim Laden läuft alles umgekehrt.
+- Viewer und Blender-Szene nutzen dieselben Werte. Das Video ist noch nicht neu gerendert.

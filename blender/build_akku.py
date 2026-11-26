@@ -339,6 +339,7 @@ def polyline(points, step=0.05):
 
 
 LI_PATHS, E_PATHS = [], []
+U_ARRIVE, U_DEPART = [], []
 for i in range(6):
     gx, gy, gz = G_SITES[i]
     ox, oy, oz = O_SITES[i]
@@ -355,9 +356,29 @@ for i in range(6):
     E_PATHS.append(resample(polyline(epts), 200))
 
 
+def path_u_at_distance(P, target, dist, from_end=True):
+    """Anteil u des Wegs, an dem das Teilchen den Abstand dist zu target erreicht (bei Ankunft bzw. beim Verlassen)."""
+    d = np.linalg.norm(np.asarray(P) - np.asarray(target), axis=1)
+    n = len(P) - 1
+    if from_end:
+        for k in range(n, -1, -1):
+            if d[k] > dist:
+                return (k + 1) / n
+        return 0.0
+    for k in range(n + 1):
+        if d[k] > dist:
+            return k / n
+    return 1.0
+
+
 def smooth01(x):
     x = min(1.0, max(0.0, x))
     return x * x * (3 - 2 * x)
+
+
+for i in range(6):
+    U_ARRIVE.append(path_u_at_distance(E_PATHS[i], CO_POS[i], R_CO + R_E))                    # Elektron berührt das Cobalt-Ion
+    U_DEPART.append(path_u_at_distance(E_PATHS[i], E_START[i], HEX_B + R_E, from_end=False))   # Elektron verlässt den Ring
 
 
 def progress(i, s):
@@ -558,6 +579,7 @@ meta = {
     "windows": WINDOWS,
     "instances": {g: {"proto": v[0], "pos": [to_three(p) for p in v[3]]} for g, v in INSTANCES.items()},
     "c6": [to_three(p) for p in C6_POS],
+    "u_arrive": [round(u, 4) for u in U_ARRIVE], "u_depart": [round(u, 4) for u in U_DEPART],
     "colors": {"co4": C["co4"], "co3": C["oxid"], "c6m": C["c6m"], "c6": C["c6"]},
     "anchors": {k: to_three(v) for k, v in ANCHORS.items()},
     "stats": stats,
@@ -762,9 +784,10 @@ def state_at(t):
         u = progress(i, s)
         st["li"].append(path_at(LI_PATHS[i], u))
         st["e"].append(path_at(E_PATHS[i], u))
-        st["eon"].append(u < 0.985)
-        st["co"].append(smooth01((u - 0.9) / 0.1))      # 0 = Co⁴⁺, 1 = Co³⁺
-        st.setdefault("c6", []).append(smooth01(u / 0.06))  # 0 = C₆⁻, 1 = C₆ (Elektron hat den Ring verlassen)
+        ua, ud = U_ARRIVE[i], U_DEPART[i]
+        st["eon"].append(u < ua + 0.4 * (1 - ua))                 # Elektron verschwindet im Cobalt-Ion
+        st["co"].append(smooth01((u - ua) / max(1e-3, 0.8 * (1 - ua))))   # 0 = Co⁴⁺, 1 = Co³⁺ – erst bei Ankunft
+        st.setdefault("c6", []).append(smooth01(u / max(1e-3, ud)))       # 0 = C₆⁻, 1 = C₆ – wenn das Elektron den Ring verlässt
     for k, p in enumerate(ELYT_LI):
         ph = t * 0.9 + k * 2.1
         st["li"].append(np.array(p) + 0.22 * np.array([math.sin(ph), 0.6 * math.sin(ph * 0.7 + 1), math.cos(ph * 1.3)]))
