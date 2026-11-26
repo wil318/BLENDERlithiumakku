@@ -150,8 +150,8 @@ loader.load(
 // ------------------------------------------------------------------ Aufbau
 const LAMP_OFF = new THREE.Color('#9c977f'), LAMP_ON = new THREE.Color('#fff7c2');
 const TRANSPARENT = { Elektrolyt: 0.1, Lampe: 0.86 };
-const KRISTALL = ['Graphit_Kristall_C', 'Graphit_Kristall_Bindung', 'Oxid_Kristall_Co', 'Oxid_Kristall_O'];
-const SCHEMA = ['Graphit_Schichten', 'Oxid_Schichten'];
+const KRISTALL = ['Graphit_Kristall_C', 'Graphit_Kristall_Bindung', 'Oxid_Kristall_Co', 'Oxid_Kristall_O', ...[1, 2, 3, 4, 5, 6].map((k) => `C6k_${k}`)];
+const SCHEMA = ['Graphit_Schichten', 'Oxid_Schichten', ...[1, 2, 3, 4, 5, 6].map((k) => `C6s_${k}`)];
 
 function physical(src) {
   const name = src.name;
@@ -227,6 +227,16 @@ function setup(gltf) {
   parts.co3 = new THREE.Color(meta.colors.co3);
   parts.elyt = meta.elyt.map((p) => new THREE.Vector3().fromArray(p));
   for (const c of parts.co) c.material = c.material.clone();
+  // C₆-Einheiten: Schema- und Kristall-Ring teilen sich je ein Material (C₆⁻ rötlich ↔ C₆ grau)
+  parts.c6 = [1, 2, 3, 4, 5, 6].map((k) => {
+    const m = nodes[`C6s_${k}`].material.clone();
+    nodes[`C6s_${k}`].material = m;
+    nodes[`C6k_${k}`].material = m;
+    return m;
+  });
+  parts.c6m = new THREE.Color(meta.colors.c6m);
+  parts.c6n = new THREE.Color(meta.colors.c6);
+  parts.c6pos = meta.c6.map((p) => new THREE.Vector3().fromArray(p));
 
   for (const n of KRISTALL) if (nodes[n]) nodes[n].visible = false;
   for (const n of ['Pfeil_e', 'Pfeil_Li']) { nodes[n].userData.noPick = true; nodes[n].visible = false; }
@@ -348,10 +358,10 @@ function samplePath(P, u, out) {
   return out.lerpVectors(P[k], P[k + 1], f - k);
 }
 
-const procInfo = { inG: 6, inO: 0, co4: 6, u: [] };
+const procInfo = { inG: 6, inO: 0, co4: 6, c6m: 6, u: [] };
 function updateParticles(time, dt) {
   const W = meta.windows;
-  let sumU = 0, inG = 0, inO = 0, co4 = 0, transit = 0;
+  let sumU = 0, inG = 0, inO = 0, co4 = 0, c6m = 0, transit = 0;
   for (let i = 0; i < 6; i++) {
     const u = smooth01((proc.s - W[i][0]) / (W[i][1] - W[i][0]));
     procInfo.u[i] = u;
@@ -365,6 +375,10 @@ function updateParticles(time, dt) {
     if (c < 0.5) co4++;
     parts.co[i].material.color.copy(parts.co4).lerp(parts.co3, c);
     parts.co[i].material.emissive.copy(parts.co[i].material.color).multiplyScalar(0.18 * (1 - c));
+    const g = smooth01(u / 0.06);                 // 0 = C₆⁻ (Elektron im Ring), 1 = C₆
+    if (g < 0.5) c6m++;
+    parts.c6[i].color.copy(parts.c6m).lerp(parts.c6n, g);
+    parts.c6[i].emissive.copy(parts.c6[i].color).multiplyScalar(0.3 * (1 - g));
   }
   parts.elyt.forEach((p, k) => {
     const ph = time * 0.9 + k * 2.1;
@@ -372,7 +386,7 @@ function updateParticles(time, dt) {
   });
   // Zeichen (+ / −) zeigen immer zur Kamera
   for (const o of [...parts.li, ...parts.e]) o.children[0].quaternion.copy(camera.quaternion);
-  Object.assign(procInfo, { inG, inO, co4, charge: 1 - sumU / 6, transit });
+  Object.assign(procInfo, { inG, inO, co4, c6m, charge: 1 - sumU / 6, transit });
 
   // Gerät: Lämpchen oder Ladegerät
   const lader = proc.device === 'lader';
@@ -459,6 +473,16 @@ function buildUI() {
       t.el.classList.toggle('co4', four);
       t.el.classList.toggle('co3', !four);
       t.span.textContent = four ? 'Co⁴⁺' : 'Co³⁺';
+    };
+  });
+  parts.c6pos.forEach((c, i) => {
+    const t = mkTag('c6m', 'C₆⁻', (v) => v.copy(c).add(new THREE.Vector3(0.75, 0.05, 0.35)));
+    t.show = () => state.labels && (state.tasks || TOUR[state.tourIdx].c6Labels || state.selected?.id === 'c6');
+    t.update = () => {
+      const minus = procInfo.u[i] < 0.03;
+      t.el.classList.toggle('c6m', minus);
+      t.el.classList.toggle('c6', !minus);
+      t.span.textContent = minus ? 'C₆⁻' : 'C₆';
     };
   });
   mkTag('e', 'e⁻', (v) => v.copy(nodes.Pfeil_e.position).add(new THREE.Vector3(0, 0.7, 0))).show = () => state.arrows;
@@ -752,7 +776,7 @@ function tick() {
     const pulseT = 0.5 + 0.5 * Math.sin(time * 3.2);
     for (const o of meshes) {
       const u = o.userData, m = o.material;
-      if (!u.ann || o.name.startsWith('Co_') || o.name === 'Lampe_Glas') continue;
+      if (!u.ann || o.name.startsWith('Co_') || o.name.startsWith('C6') || o.name === 'Lampe_Glas') continue;
       const hl = state.highlight.includes(u.ann);
       if (hl) m.emissive.copy(m.color).multiplyScalar(0.05 + 0.1 * pulseT);
       else m.emissive.copy(u.baseEmissive);
@@ -802,11 +826,13 @@ function updateReadout() {
   $('rG').textContent = `${procInfo.inG} / 6`;
   $('rO').textContent = `${procInfo.inO} / 6`;
   $('rCo').textContent = `${procInfo.co4} / ${6 - procInfo.co4}`;
+  $('rC6').textContent = `${procInfo.c6m} / ${6 - procInfo.c6m}`;
 }
 
 function anchorPos(anchor, out) {
   if (anchor.startsWith('dyn:')) {
     const k = anchor.slice(4);
+    if (k === 'c60') return out.copy(parts.c6pos[0]).add(new THREE.Vector3(0, 0.3, 0));
     const o = k === 'elyt0' ? parts.li[6] : k === 'e0' ? parts.e[0] : parts.co[0];
     if (!o.visible) return null;
     return out.copy(o.position).add(new THREE.Vector3(0, 0.45, 0));

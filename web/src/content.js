@@ -5,7 +5,7 @@
 // Koordinaten (three.js): +x rechts, +y oben, +z zum Betrachter. Graphit links, Cobalt-Oxid rechts.
 
 export const GROUPS = [
-  ['Halbzellen', ['graphit', 'oxid', 'cobalt']],
+  ['Halbzellen', ['graphit', 'c6', 'oxid', 'cobalt']],
   ['Dazwischen', ['elektrolyt', 'separator']],
   ['Teilchen', ['li', 'elektron']],
   ['Äußerer Stromkreis', ['draht', 'lampe', 'ladegeraet']],
@@ -19,6 +19,14 @@ export const ANNOTATIONS = [
       'Graphit ist eine Form des Kohlenstoffs und besteht aus vielen dünnen Schichten. Für Gleichungen betrachtet man immer 6 Kohlenstoffatome (C₆). ' +
       'Im geladenen Akku sind zwischen den Schichten Lithium-Ionen eingelagert, und für jedes Lithium-Ion trägt eine C₆-Einheit ein zusätzliches Elektron (C₆⁻). Geladen: LiC₆ (Li⁺ + C₆⁻).',
     facts: [['Pol', 'Minuspol (−)'], ['geladen', 'LiC₆ (Li⁺ + C₆⁻)'], ['entladen', 'C₆'], ['Bild', 'Regal für Lithium-Ionen']],
+  },
+  {
+    id: 'c6', title: 'C₆-Einheiten', kicker: 'C₆⁻ ↔ C₆', color: '#d8665a', anchor: 'dyn:c60',
+    meshes: ['C6s_', 'C6k_'],
+    text:
+      'Für Gleichungen betrachtet man immer 6 Kohlenstoffatome als Einheit (C₆). Hervorgehoben ist unter jedem Lithium-Ion eine solche Einheit als Sechsring. ' +
+      'Trägt sie ein zusätzliches Elektron (rot, in der Mitte), ist sie eine C₆⁻-Einheit (rötlicher Ring). Gibt sie das Elektron ab, wird sie zu C₆ (grauer Ring).',
+    facts: [['rötlich', 'C₆⁻ (ein Elektron zu viel)'], ['grau', 'C₆'], ['im Modell', '6 markierte Einheiten']],
   },
   {
     id: 'oxid', title: 'Pluspol: Cobalt-Oxid-Halbzelle', kicker: 'CoO₂ · LiCoO₂', color: '#4f8fd8', anchor: 'oxid',
@@ -122,12 +130,12 @@ export const TOUR = [
   },
   {
     kicker: 'Minuspol', title: 'Die Graphit-Halbzelle', seconds: 12,
-    view: GRAPHIT, proc: { from: 0, run: 0, device: 'lampe' },
-    highlight: ['graphit', 'li', 'elektron'],
+    view: GRAPHIT, proc: { from: 0, run: 0, device: 'lampe' }, c6Labels: true,
+    highlight: ['c6', 'li', 'elektron'],
     text:
       'Graphit besteht aus vielen übereinanderliegenden Kohlenstoffschichten. Im geladenen Akku stecken die Lithium-Ionen zwischen diesen Schichten wie Bücher in einem Regal. ' +
-      'Für jedes Li⁺ trägt eine C₆-Einheit ein zusätzliches Elektron (rot): C₆⁻. Zusammen schreibt man LiC₆. Tipp: „Kristall“ zeigt die Sechseck-Schichten.',
-    aufgabe: 'Sieh dir die Graphit-Halbzelle im geladenen Akku an. Welche Teilchen sitzen zwischen den Schichten? Was sitzt neben jedem Lithium-Ion? Tipp: „Kristall“ zeigt die Sechseck-Schichten.',
+      'Unter jedem Li⁺ ist eine C₆-Einheit als Sechsring markiert. Sie trägt ein zusätzliches Elektron (rot) und ist deshalb eine C₆⁻-Einheit (rötlicher Ring). Zusammen schreibt man LiC₆ (Li⁺ + C₆⁻). Tipp: „Kristall“ zeigt die Sechseck-Schichten.',
+    aufgabe: 'Sieh dir die Graphit-Halbzelle im geladenen Akku an. Welche Teilchen sitzen zwischen den Schichten? Was siehst du direkt unter jedem Lithium-Ion, und welche Ladung hat diese C₆-Einheit? Tipp: „Kristall“ zeigt die Sechseck-Schichten.',
   },
   {
     kicker: 'Pluspol', title: 'Die Cobalt-Oxid-Halbzelle', seconds: 12,
@@ -140,13 +148,13 @@ export const TOUR = [
   },
   {
     kicker: 'Entladen · Minuspol', title: 'Der Akku liefert Strom', titleAufgabe: 'Am Minuspol beim Entladen', seconds: 14,
-    view: { az: 10, el: 8, d: 22, t: [-3.2, 1.4, 0] }, proc: { from: 0, run: 1, to: 0.45, speed: 0.04, device: 'lampe' },
-    highlight: ['graphit', 'li', 'elektron'], arrows: true,
+    view: { az: 10, el: 8, d: 22, t: [-3.2, 1.4, 0] }, proc: { from: 0, run: 1, to: 0.45, speed: 0.04, device: 'lampe' }, c6Labels: true,
+    highlight: ['c6', 'li', 'elektron'], arrows: true,
     text:
-      'Mit dem Lämpchen beginnt eine freiwillige, exergonische Redoxreaktion: Der Akku arbeitet wie eine galvanische Zelle. Die C₆⁻-Einheiten geben ihre Elektronen ab, ' +
-      'sie werden zu C₆ oxidiert. Die Elektronen fließen über den Draht zum Pluspol, das Lämpchen leuchtet. Die Graphit-Halbzelle wird positiver, deshalb wandern die Lithium-Ionen hinaus.',
+      'Mit dem Lämpchen beginnt eine freiwillige, exergonische Redoxreaktion: Der Akku arbeitet wie eine galvanische Zelle. Eine C₆⁻-Einheit gibt ihr Elektron ab, ' +
+      'der Ring wird grau: Aus C₆⁻ wird C₆, sie wird oxidiert. Die Elektronen fließen über den Draht zum Pluspol, das Lämpchen leuchtet. Die Graphit-Halbzelle wird positiver, deshalb wandern die Lithium-Ionen hinaus.',
     eq: [['Minuspol', 'C₆⁻ → C₆ + e⁻'], ['', 'Oxidation · Elektronendonator: C₆⁻']],
-    aufgabe: 'Beobachte die Graphit-Halbzelle beim Entladen. Was geschieht mit den roten Elektronen und mit den Lithium-Ionen? Wohin fließen die Elektronen? (A3)',
+    aufgabe: 'Beobachte eine C₆⁻-Einheit beim Entladen: Was gibt sie ab, und was wird aus ihr? Was geschieht mit dem Lithium-Ion darüber? Stelle die Teilgleichung für den Minuspol auf (A3).',
   },
   {
     kicker: 'Entladen · Pluspol', title: 'Co⁴⁺ nimmt ein Elektron auf', titleAufgabe: 'Am Pluspol beim Entladen', seconds: 16,
@@ -161,17 +169,17 @@ export const TOUR = [
   },
   {
     kicker: 'Entladen · Ende', title: 'Der Akku ist leer', seconds: 12,
-    view: OVERVIEW, proc: { from: 1, run: 0, device: 'lampe' },
+    view: OVERVIEW, proc: { from: 1, run: 0, device: 'lampe' }, c6Labels: true, coLabels: true,
     highlight: ['graphit', 'oxid'], arrows: true,
     text:
       'Alle beweglichen Lithium-Ionen sind jetzt in der Cobalt-Oxid-Halbzelle eingelagert (LiCoO₂), alle markierten Cobalt-Ionen sind Co³⁺. ' +
-      'In der Graphit-Halbzelle sitzen keine zusätzlichen Elektronen mehr (C₆). Das Lämpchen geht aus.',
+      'Alle markierten C₆-Einheiten sind grau (C₆), sie tragen keine zusätzlichen Elektronen mehr. Das Lämpchen geht aus.',
     eq: [['Gesamt', 'C₆⁻ + Co⁴⁺ → C₆ + Co³⁺'], ['Donator', 'C₆⁻ (wird oxidiert)'], ['Akzeptor', 'Co⁴⁺ (wird reduziert)']],
-    aufgabe: 'Der Akku ist leer. Wo sind jetzt die Lithium-Ionen, und welche Ladung haben die markierten Cobalt-Ionen? Stelle die Gesamtgleichung für das Entladen auf (A3).',
+    aufgabe: 'Der Akku ist leer. Wo sind jetzt die Lithium-Ionen? Welche Ladung haben jetzt die markierten Cobalt-Ionen und die C₆-Einheiten? Stelle die Gesamtgleichung für das Entladen auf (A3).',
   },
   {
     kicker: 'Laden', title: 'Das Ladegerät zwingt zurück', titleAufgabe: 'Laden mit dem Ladegerät', seconds: 24,
-    view: OVERVIEW, proc: { from: 1, run: -1, to: 0, speed: 0.05, device: 'lader' },
+    view: OVERVIEW, proc: { from: 1, run: -1, to: 0, speed: 0.05, device: 'lader' }, c6Labels: true, coLabels: true,
     highlight: ['ladegeraet', 'li', 'elektron'], arrows: true,
     text:
       'Jetzt ist ein Ladegerät angeschlossen. Es zwingt die Reaktion in die Gegenrichtung: Das Laden ist erzwungen und endergonisch, der Akku arbeitet wie eine Elektrolysezelle. ' +

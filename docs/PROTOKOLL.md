@@ -83,3 +83,21 @@ Diese Punkte stehen nur hier und nicht in den Schülertexten:
 ### Fachlich
 - Begründung, warum Li⁺ wandert, jetzt wie in Abschnitt 12: Beim Entladen wird die Graphit-Halbzelle positiver und die Cobalt-Oxid-Halbzelle negativer. Die Li⁺ wandern deshalb dorthin, wohin auch die Elektronen fließen, und gleichen die negative Ladung aus.
 - Korrigiert (aus der alten Übergabe übernommen): LiCoO₂ wird real nur bis etwa Li₀,₅CoO₂ **geladen**.
+
+## 26.11.2026 – C₆-Einheiten am Minuspol
+
+### Anlass
+Am Pluspol sieht man ein bestimmtes Teilchen seine Ladung ändern (Co⁴⁺ violett → Co³⁺ blau, mit Schildchen). Am Minuspol lag dagegen nur ein Elektron neben dem Li⁺. Ein Teilchen „C₆⁻“, das zu „C₆“ wird, war nicht zu sehen. So konnten die Lernenden die Teilgleichung C₆⁻ → C₆ + e⁻ kaum ablesen.
+
+### Umsetzung (Blender und Viewer, Video noch nicht neu gerendert)
+- Unter jedem der 6 Li⁺-Plätze in der Graphit-Halbzelle ist ein **Sechsring als C₆-Einheit** markiert:
+  - Schemaansicht (`C6s_1…6`): Ring auf der Graphitplatte.
+  - Kristallansicht (`C6k_1…6`): die 6 C-Atome des Gitter-Sechsecks direkt unter dem Li⁺.
+- Das zusätzliche Elektron sitzt **in der Mitte des Rings**, nicht mehr daneben. Das Li⁺ sitzt etwas höher darüber, man sieht also LiC₆ = Li⁺ + C₆⁻ als Paar.
+- **Farben:** C₆⁻ ist ein rötlicher Ring `#d8665a` (Elektronenüberschuss). Sobald das Elektron den Ring verlässt, wird er grau `#a3aab3` (C₆). Beim Laden läuft es umgekehrt. Das entspricht der Logik am Pluspol: violett = Elektronenmangel (Co⁴⁺).
+- **Schildchen C₆⁻/C₆** gibt es in beiden Fassungen, wie Co⁴⁺/Co³⁺. Sie sind Beobachtung, keine Lösung. In den Messwerten steht „C₆⁻ / C₆“.
+- Stationstexte 2, 4 und 6 (Voll- und Schülerfassung) sind angepasst, dazu kommt ein neuer Eintrag „C₆-Einheiten“ im Info-Panel (Vollfassung).
+- Die Blender-Szene enthält die C₆-Animation schon (Materialfarbe gekeyframet). Das Video `akku.mp4` ist aber noch die alte Fassung.
+
+### Hinweis für die Lehrkraft (bewusste Vereinfachung)
+Im echten Graphit gehört das zusätzliche Elektron keinem bestimmten Sechsring, es ist über die Schicht verteilt (delokalisiert). Die C₆-Einheit ist eine **Rechen-Einheit** („Für Gleichungen betrachten wir immer 6 Kohlenstoffatome“, Infotext Abschnitt 11). Das Modell zeigt sie wie die markierten Cobalt-Ionen als einzelnes Teilchen.

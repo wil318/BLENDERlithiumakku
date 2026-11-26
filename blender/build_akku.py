@@ -56,6 +56,8 @@ C = {
     "graphit_c": "#7c838d",    # Kohlenstoffatome in der Kristallansicht
     "oxid": "#2f6db5",         # Oxidschichten (und Co³⁺)
     "co4": "#b47cff",          # Co⁴⁺ (hellviolett)
+    "c6m": "#d8665a",          # C₆⁻-Einheit: Ring mit rötlichem Ton (Elektronenüberschuss)
+    "c6": "#a3aab3",           # C₆-Einheit: neutral grau
     "sauerstoff": "#dfe5ee",   # O²⁻ in der Kristallansicht (nicht rot: rot = Elektronen)
     "li": "#f2a900", "li_rand": "#9a6b00", "li_zeichen": "#5a3d00",
     "elektrolyt": "#e3f1fb", "behaelter": "#7a9cb5",
@@ -295,9 +297,12 @@ G_SITES_RAW = [(-5.0, -1.9, GAPS[4]), (-6.6, -1.6, GAPS[3]), (-5.4, -2.0, GAPS[2
                (-4.8, -1.5, GAPS[1]), (-6.5, -1.9, GAPS[0]), (-7.2, -1.7, GAPS[2])]
 O_SITES = [(5.25, -2.25, GAPS[4]), (6.75, -1.75, GAPS[3]), (4.75, -2.25, GAPS[2]),
            (6.25, -2.25, GAPS[1]), (5.75, -1.75, GAPS[0]), (7.25, -2.25, GAPS[2])]
-G_SITES = [(*snap_hex(x, y), z) for x, y, z in G_SITES_RAW]
+# Li⁺ sitzt etwas über der Lückenmitte, darunter die C₆-Einheit (Sechsring) mit dem zusätzlichen Elektron in der Mitte
+G_LAYER = [z - 0.6 for x, y, z in G_SITES_RAW]                    # Graphitschicht unter dem Li⁺-Platz
+G_SITES = [(*snap_hex(x, y), z + 0.12) for x, y, z in G_SITES_RAW]
+C6_POS = [(x, y, zl) for (x, y, _), zl in zip(G_SITES, G_LAYER)]   # Mitte des Sechsrings (in der Schicht)
 CO_POS = [(x, y, z - 0.6) for x, y, z in O_SITES]               # aktives Cobalt-Ion direkt unter dem Li⁺-Platz
-E_START = [(x + 0.46, y - 0.18, z - 0.6 + 0.12 + R_E) for x, y, z in G_SITES]  # zusätzliches Elektron im Graphit
+E_START = [(x, y, zl + 0.12 + 0.05) for (x, y, _), zl in zip(G_SITES, G_LAYER)]  # zusätzliches Elektron in der C₆-Einheit
 ELYT_LI = [(-2.1, 1.3, -1.6), (2.3, 1.1, 1.7)]
 WINDOWS = [(round(0.14 * i, 3), round(0.14 * i + 0.30, 3)) for i in range(6)]
 
@@ -430,6 +435,20 @@ for i, p in enumerate(CO_POS):
     m = make_mat(f"Co_{i + 1}", C["co4"], rough=0.3, coat=0.4, emit=0.25)
     make_object(f"Co_{i + 1}", *uvsphere(R_CO, 20, 12), m, "Cobalt", loc=p)
 
+# Die sechs C₆-Einheiten (C₆⁻ ↔ C₆): Sechsring unter jedem Li⁺-Platz; Schema = auf der Platte, Kristall = die 6 C-Atome des Gitters
+def hex_ring(cx, cy, z, r_atom, r_bond):
+    pts = [(cx + HEX_B * math.cos(math.radians(90 + 60 * k)), cy + HEX_B * math.sin(math.radians(90 + 60 * k)), z) for k in range(6)]
+    sph = uvsphere(r_atom, 14, 8)
+    parts = [(sph[0] + np.array(p), sph[1]) for p in pts]
+    parts += [cyl(pts[k], pts[(k + 1) % 6], r_bond, 8, caps=False) for k in range(6)]
+    return merge(*parts)
+
+
+for i, (x, y, zl) in enumerate(C6_POS):
+    m = make_mat(f"C6_{i + 1}", C["c6m"], rough=0.35, emit=0.35)
+    make_object(f"C6s_{i + 1}", *hex_ring(x, y, zl + 0.12 + 0.05, 0.095, 0.05), m, "C6")
+    make_object(f"C6k_{i + 1}", *hex_ring(x, y, zl, 0.1, 0.045), m, "Kristall")
+
 # Elektrolyt, Behälter, Separator
 make_object("Elektrolyt_Rueckwand", *box((0, EL["y"] - 0.02, 0), (2 * EL["x"], 0.04, EL["z1"] - EL["z0"])), make_mat("Rueckwand", "#16324f", rough=0.6), "Zelle", smooth=False)
 make_object("Elektrolyt", *box((0, 0, 0), (2 * EL["x"], 2 * EL["y"], EL["z1"] - EL["z0"])), M["Elektrolyt"], "Zelle", smooth=False)
@@ -538,7 +557,8 @@ meta = {
     "elyt": [to_three(p) for p in ELYT_LI],
     "windows": WINDOWS,
     "instances": {g: {"proto": v[0], "pos": [to_three(p) for p in v[3]]} for g, v in INSTANCES.items()},
-    "colors": {"co4": C["co4"], "co3": C["oxid"]},
+    "c6": [to_three(p) for p in C6_POS],
+    "colors": {"co4": C["co4"], "co3": C["oxid"], "c6m": C["c6m"], "c6": C["c6"]},
     "anchors": {k: to_three(v) for k, v in ANCHORS.items()},
     "stats": stats,
 }
@@ -744,6 +764,7 @@ def state_at(t):
         st["e"].append(path_at(E_PATHS[i], u))
         st["eon"].append(u < 0.985)
         st["co"].append(smooth01((u - 0.9) / 0.1))      # 0 = Co⁴⁺, 1 = Co³⁺
+        st.setdefault("c6", []).append(smooth01(u / 0.06))  # 0 = C₆⁻, 1 = C₆ (Elektron hat den Ring verlassen)
     for k, p in enumerate(ELYT_LI):
         ph = t * 0.9 + k * 2.1
         st["li"].append(np.array(p) + 0.22 * np.array([math.sin(ph), 0.6 * math.sin(ph * 0.7 + 1), math.cos(ph * 1.3)]))
@@ -757,6 +778,7 @@ def key_hide(o, frame, hidden):
 
 if True:  # Video-Animation immer anlegen
     co4, co3 = np.array(srgb(C["co4"])), np.array(srgb(C["oxid"]))
+    c6m, c6n = np.array(srgb(C["c6m"])), np.array(srgb(C["c6"]))
     lamp_bsdf = M["Lampe"].node_tree.nodes["Principled BSDF"]
     lamp_bsdf.inputs["Emission Color"].default_value = (*srgb("#ffe08a"), 1)
     lader_objs = list(COLL["Lader"].objects)
@@ -783,6 +805,17 @@ if True:  # Video-Animation immer anlegen
                     o.keyframe_insert("scale", frame=f - 1)
                     o.scale = (sc,) * 3
                 prev[o.name] = sc
+        for i in range(6):
+            m = MATS[f"C6_{i + 1}"]
+            key = f"c6{i}"
+            if prev.get(key) is None or abs(prev[key] - st["c6"][i]) > 1e-3 or f == NF:
+                col = c6m * (1 - st["c6"][i]) + c6n * st["c6"][i]
+                bsdf = m.node_tree.nodes["Principled BSDF"]
+                bsdf.inputs["Base Color"].default_value = (*col, 1)
+                bsdf.inputs["Base Color"].keyframe_insert("default_value", frame=f)
+                bsdf.inputs["Emission Strength"].default_value = 0.35 * (1 - st["c6"][i])
+                bsdf.inputs["Emission Strength"].keyframe_insert("default_value", frame=f)
+                prev[key] = st["c6"][i]
         for i in range(6):
             m = MATS[f"Co_{i + 1}"]
             col = co4 * (1 - st["co"][i]) + co3 * st["co"][i]
